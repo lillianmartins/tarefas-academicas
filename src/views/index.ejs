@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= titulo %> · Tarefas Acadêmicas</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="topo">
+    <a class="marca" href="/tarefas">Minhas Tarefas</a>
+    <a class="botao" href="/tarefas/nova">Nova tarefa</a>
+  </header>
+  <main>
+    <% if (pagina === 'lista') { %>
+      <h1>Tarefas</h1>
+      <nav class="filtros" aria-label="Filtrar por status">
+        <a href="/tarefas?status=todas" class="<%= filtro === 'todas' ? 'ativo' : '' %>">Todas (<%= contagem.todas %>)</a>
+        <a href="/tarefas?status=pendente" class="<%= filtro === 'pendente' ? 'ativo' : '' %>">Pendentes (<%= contagem.pendente %>)</a>
+        <a href="/tarefas?status=concluida" class="<%= filtro === 'concluida' ? 'ativo' : '' %>">Concluídas (<%= contagem.concluida %>)</a>
+      </nav>
+
+      <% if (tarefas.length === 0) { %>
+        <p class="vazio">
+          <% if (filtro === 'todas') { %>
+            Nenhuma tarefa cadastrada ainda. <a href="/tarefas/nova">Clique aqui para cadastrar.</a>
+          <% } else { %>
+            Nenhuma tarefa <%= filtro === 'pendente' ? 'pendente' : 'concluída' %> por aqui.
+          <% } %>
+        </p>
+      <% } else { %>
+        <ul class="tarefas">
+          <% tarefas.forEach((t) => { %>
+            <li class="tarefa <%= t.status %>">
+              <div class="resumo">
+                <a class="titulo" href="/tarefas/<%= t.id %>"><%= t.titulo %></a>
+                <span class="disciplina"><%= t.disciplina %></span>
+              </div>
+              <span class="status <%= t.status %>"><%= t.status === 'concluida' ? 'Concluída' : 'Pendente' %></span>
+              <div class="acoes">
+                <div class="acoes-grupo">
+                  <a class="botao botao-secundario" href="/tarefas/<%= t.id %>">Detalhes</a>
+                  <a class="botao botao-secundario" href="/tarefas/<%= t.id %>/editar">Editar</a>
+                  <a class="botao perigo" href="/tarefas/<%= t.id %>/excluir">Excluir</a>
+                </div>
+                <% if (t.status === 'pendente') { %>
+                  <div class="acoes-grupo acoes-direita">
+                    <form method="POST" action="/tarefas/<%= t.id %>/concluir">
+                      <button type="submit" class="botao">Concluir</button>
+                    </form>
+                  </div>
+                <% } %>
+              </div>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+    <% } else if (pagina === 'formulario') { %>
+      <h1><%= tituloPagina %></h1>
+      <% if (erros.length > 0) { %>
+        <div class="erros" role="alert">
+          <strong>Corrija os campos abaixo:</strong>
+          <ul>
+            <% erros.forEach((erro) => { %><li><%= erro %></li><% }) %>
+          </ul>
+        </div>
+      <% } %>
+      <form method="POST" action="<%= acao %>" class="formulario">
+        <label for="titulo">Título</label>
+        <input id="titulo" name="titulo" type="text" maxlength="100" value="<%= dados.titulo %>" required>
+
+        <label for="disciplina">Disciplina</label>
+        <input id="disciplina" name="disciplina" type="text" maxlength="80" value="<%= dados.disciplina %>" required>
+
+        <label for="descricao">Descrição <span class="opcional">(opcional)</span></label>
+        <textarea id="descricao" name="descricao" rows="5" maxlength="500"><%= dados.descricao %></textarea>
+
+        <div class="acoes">
+          <div class="acoes-grupo">
+            <a class="botao perigo" href="<%= cancelar %>">Cancelar</a>
+          </div>
+          <div class="acoes-grupo acoes-direita">
+            <button type="submit" class="botao"><%= botao %></button>
+          </div>
+        </div>
+      </form>
+    <% } else if (pagina === 'detalhes') { %>
+      <h1><%= tarefa.titulo %></h1>
+      <dl class="detalhes">
+        <dt>Código</dt><dd><%= tarefa.id %></dd>
+        <dt>Disciplina</dt><dd><%= tarefa.disciplina %></dd>
+        <dt>Status</dt>
+        <dd><span class="status <%= tarefa.status %>"><%= tarefa.status === 'concluida' ? 'Concluída' : 'Pendente' %></span></dd>
+        <dt>Descrição</dt>
+        <dd><%= tarefa.descricao || 'Sem descrição.' %></dd>
+      </dl>
+      <div class="acoes">
+        <div class="acoes-grupo">
+          <a class="botao botao-secundario" href="/tarefas">Voltar para a lista</a>
+          <a class="botao botao-secundario" href="/tarefas/<%= tarefa.id %>/editar">Editar</a>
+          <a class="botao perigo" href="/tarefas/<%= tarefa.id %>/excluir">Excluir</a>
+        </div>
+        <% if (tarefa.status === 'pendente') { %>
+          <div class="acoes-grupo acoes-direita">
+            <form method="POST" action="/tarefas/<%= tarefa.id %>/concluir">
+              <button type="submit" class="botao">Concluir tarefa</button>
+            </form>
+          </div>
+        <% } %>
+      </div>
+    <% } else if (pagina === 'confirmar-exclusao') { %>
+      <h1>Excluir esta tarefa?</h1>
+      <p>A tarefa <strong><%= tarefa.titulo %></strong> (<%= tarefa.disciplina %>) será removida e não poderá ser recuperada.</p>
+      <form method="POST" action="/tarefas/<%= tarefa.id %>/excluir" class="acoes">
+        <div class="acoes-grupo">
+          <a class="botao perigo" href="/tarefas/<%= tarefa.id %>">Cancelar</a>
+          <button type="submit" class="botao perigo">Excluir tarefa</button>
+        </div>
+      </form>
+    <% } else if (pagina === 'nao-encontrado') { %>
+      <h1>Ops, não achamos isso</h1>
+      <p><%= mensagem %></p>
+      <p><a class="botao botao-secundario" href="/tarefas">Voltar para a lista de tarefas</a></p>
+    <% } %>
+  </main>
+</body>
+</html>
